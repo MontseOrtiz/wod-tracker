@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Block, Exercise } from '@/types/database';
 
+export const dynamic = 'force-dynamic';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
