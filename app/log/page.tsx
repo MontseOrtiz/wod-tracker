@@ -76,6 +76,16 @@ function toFloat(value: string): number | null {
   return value.trim() !== '' ? parseFloat(value) : null;
 }
 
+function hasValidWorkoutData(formData: FormData): boolean {
+  const hasWarmup = formData.warmupNotes.trim() !== '';
+  const hasStrength = formData.strengthExercises.some(ex => ex.exercise_name.trim() !== '');
+  const hasWod =
+    formData.wodFormat.trim() !== '' ||
+    formData.wodResult.trim() !== '' ||
+    formData.wodExercises.some(ex => ex.exercise_name.trim() !== '');
+  return hasWarmup || hasStrength || hasWod;
+}
+
 function toExerciseRows(exercises: GeminiExercise[] | undefined): ExerciseRow[] {
   if (!exercises || exercises.length === 0) return [makeExercise()];
   return exercises.map(ex => ({
@@ -289,6 +299,11 @@ export default function LogPage() {
   }
 
   async function handleSave() {
+    if (!hasValidWorkoutData(formData)) {
+      setError('Registra al menos un dato del entrenamiento antes de guardar.');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
