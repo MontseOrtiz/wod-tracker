@@ -1,11 +1,22 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { GoogleGenAI, createUserContent, createPartFromBase64 } from '@google/genai';
+import { GoogleGenAI, createUserContent, createPartFromBase64, ApiError } from '@google/genai';
 import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const MAX_GEMINI_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 2000;
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isUnavailableError(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 503;
+}
 
 const PROMPT = `You are reading a photo of a handwritten CrossFit gym whiteboard.
 Extract the workout written on it and return ONLY valid JSON matching exactly this structure (no markdown, no code fences, no explanation — just the JSON):
@@ -70,22 +81,41 @@ export async function POST(request: Request) {
   } = supabase.storage.from('whiteboard-photos').getPublicUrl(path);
 
   // 2 — Send the photo to Gemini and ask it to read the whiteboard
+  // Retries only on 503 (UNAVAILABLE / high demand) — other errors fail immediately.
   let responseText: string | undefined;
-  try {
-    const result = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: createUserContent([
-        PROMPT,
-        createPartFromBase64(buffer.toString('base64'), file.type),
-      ]),
-      config: {
-        responseMimeType: 'application/json',
-      },
-    });
-    responseText = result.text;
-  } catch (err) {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_GEMINI_ATTEMPTS; attempt++) {
+    try {
+      const result = await ai.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: createUserContent([
+          PROMPT,
+          createPartFromBase64(buffer.toString('base64'), file.type),
+        ]),
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+      responseText = result.text;
+      lastError = undefined;
+      break;
+    } catch (err) {
+      lastError = err;
+      if (!isUnavailableError(err) || attempt === MAX_GEMINI_ATTEMPTS) break;
+      await sleep(RETRY_DELAY_MS);
+    }
+  }
+
+  if (lastError) {
+    if (isUnavailableError(lastError)) {
+      return NextResponse.json(
+        { error: 'El servicio de IA está saturado, intenta de nuevo en unos minutos' },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
-      { error: `Gemini request failed: ${err instanceof Error ? err.message : 'unknown error'}` },
+      { error: `Gemini request failed: ${lastError instanceof Error ? lastError.message : 'unknown error'}` },
       { status: 502 }
     );
   }
