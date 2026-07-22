@@ -19,11 +19,34 @@ type ExerciseRow = {
 };
 
 type FormData = {
+  photoUrl: string | null;
   warmupNotes: string;
   strengthExercises: ExerciseRow[];
   wodFormat: string;
   wodResult: string;
   wodExercises: ExerciseRow[];
+};
+
+// ---------------------------------------------------------------------------
+// Gemini parse-workout response shape
+// ---------------------------------------------------------------------------
+
+type GeminiExercise = {
+  exercise_name: string;
+  weight: number | null;
+  unit: 'kg' | 'lb' | '%' | null;
+  reps: number | null;
+  sets: number | null;
+};
+
+type GeminiParsedWorkout = {
+  warmup_notes: string;
+  strength_skill: GeminiExercise[];
+  wod: {
+    wod_format: string;
+    result: string;
+    exercises: GeminiExercise[];
+  };
 };
 
 // ---------------------------------------------------------------------------
@@ -36,6 +59,7 @@ function makeExercise(): ExerciseRow {
 
 function getInitialData(): FormData {
   return {
+    photoUrl: null,
     warmupNotes: '',
     strengthExercises: [makeExercise()],
     wodFormat: '',
@@ -50,6 +74,18 @@ function toInt(value: string): number | null {
 
 function toFloat(value: string): number | null {
   return value.trim() !== '' ? parseFloat(value) : null;
+}
+
+function toExerciseRows(exercises: GeminiExercise[] | undefined): ExerciseRow[] {
+  if (!exercises || exercises.length === 0) return [makeExercise()];
+  return exercises.map(ex => ({
+    id: crypto.randomUUID(),
+    exercise_name: ex.exercise_name ?? '',
+    weight: ex.weight != null ? String(ex.weight) : '',
+    reps: ex.reps != null ? String(ex.reps) : '',
+    sets: ex.sets != null ? String(ex.sets) : '',
+    unit: ex.unit ?? 'lb',
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -200,13 +236,56 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
 
 export default function LogPage() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [formData, setFormData] = useState<FormData>(getInitialData);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isParsingPhoto, setIsParsingPhoto] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setFormData(prev => ({ ...prev, [key]: value }));
+  }
+
+  async function handleAnalyzePhoto() {
+    if (!selectedFile) {
+      setParseError('Selecciona una foto primero.');
+      return;
+    }
+
+    setIsParsingPhoto(true);
+    setParseError(null);
+
+    try {
+      const body = new FormData();
+      body.append('image', selectedFile);
+
+      const res = await fetch('/api/parse-workout', { method: 'POST', body });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setParseError(json.error ?? 'No se pudo leer la foto.');
+        setIsParsingPhoto(false);
+        return;
+      }
+
+      const { photoUrl, data } = json as { photoUrl: string; data: GeminiParsedWorkout };
+
+      setFormData(prev => ({
+        ...prev,
+        photoUrl,
+        warmupNotes: data.warmup_notes ?? '',
+        strengthExercises: toExerciseRows(data.strength_skill),
+        wodFormat: data.wod?.wod_format ?? '',
+        wodExercises: toExerciseRows(data.wod?.exercises),
+      }));
+      setStep(1);
+    } catch {
+      setParseError('No se pudo conectar con el servidor. Intenta de nuevo.');
+    } finally {
+      setIsParsingPhoto(false);
+    }
   }
 
   async function handleSave() {
@@ -217,7 +296,7 @@ export default function LogPage() {
     const today = new Date().toISOString().split('T')[0];
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .insert({ session_date: today, whiteboard_photo_url: null, notes: null })
+      .insert({ session_date: today, whiteboard_photo_url: formData.photoUrl, notes: null })
       .select('id')
       .single();
 
@@ -310,7 +389,44 @@ export default function LogPage() {
           ← Home
         </Link>
       </div>
-      <StepIndicator current={step} />
+      {step !== 0 && <StepIndicator current={step} />}
+
+      {/* ── Step 0: Photo upload ─────────────────────────────── */}
+      {step === 0 && (
+        <div className="flex flex-col gap-6">
+          <h1 className="text-xl font-semibold">Sube la foto del pizarrón</h1>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+            className="text-sm"
+          />
+
+          {parseError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              {parseError}
+            </p>
+          )}
+
+          <button
+            onClick={handleAnalyzePhoto}
+            disabled={isParsingPhoto || !selectedFile}
+            className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-40"
+          >
+            {isParsingPhoto ? 'Leyendo el pizarrón...' : 'Analizar foto'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            disabled={isParsingPhoto}
+            className="text-sm text-gray-500 hover:text-gray-800 underline self-center disabled:opacity-40"
+          >
+            Omitir y llenar manualmente
+          </button>
+        </div>
+      )}
 
       {/* ── Step 1: Warmup ───────────────────────────────────── */}
       {step === 1 && (
