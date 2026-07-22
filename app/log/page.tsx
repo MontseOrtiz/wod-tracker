@@ -259,6 +259,7 @@ export default function LogPage() {
   }
 
   async function handleAnalyzePhoto() {
+    console.log("click")
     if (!selectedFile) {
       setParseError('Selecciona una foto primero.');
       return;
