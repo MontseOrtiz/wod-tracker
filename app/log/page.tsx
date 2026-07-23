@@ -125,53 +125,56 @@ function ExerciseList({
   return (
     <div className="flex flex-col gap-3">
       {exercises.map((ex, index) => (
-        <div key={ex.id} className="flex flex-col gap-2 p-3 border border-gray-200 rounded-lg">
+        <div
+          key={ex.id}
+          className="flex flex-col gap-2 p-3 bg-surface border border-primary/10 rounded-2xl shadow-[0_1px_3px_rgba(75,68,83,0.05)]"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-              Exercise {index + 1}
+            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
+              Ejercicio {index + 1}
             </span>
             {exercises.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeRow(ex.id)}
-                className="text-xs text-red-400 hover:text-red-600"
+                className="text-xs text-error-strong hover:opacity-70 transition"
               >
-                Remove
+                Eliminar
               </button>
             )}
           </div>
           <input
             type="text"
-            placeholder="Exercise name (e.g. Back Squat)"
+            placeholder="Nombre del ejercicio (ej. Sentadilla trasera)"
             value={ex.exercise_name}
             onChange={e => updateField(ex.id, 'exercise_name', e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
           />
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-400">Sets</label>
+              <label className="text-xs text-text-secondary">Series</label>
               <input
                 type="number"
                 placeholder="—"
                 value={ex.sets}
                 onChange={e => updateField(ex.id, 'sets', e.target.value)}
                 min={0}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-400">Reps</label>
+              <label className="text-xs text-text-secondary">Reps</label>
               <input
                 type="number"
                 placeholder="—"
                 value={ex.reps}
                 onChange={e => updateField(ex.id, 'reps', e.target.value)}
                 min={0}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-gray-400">Weight</label>
+              <label className="text-xs text-text-secondary">Peso</label>
               <div className="flex gap-1">
                 <input
                   type="number"
@@ -179,12 +182,12 @@ function ExerciseList({
                   value={ex.weight}
                   onChange={e => updateField(ex.id, 'weight', e.target.value)}
                   min={0}
-                  className="min-w-0 flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  className="min-w-0 flex-1 border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
                 />
                 <select
                   value={ex.unit}
                   onChange={e => updateField(ex.id, 'unit', e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black bg-white"
+                  className="border border-text-secondary/25 rounded-lg px-2 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
                 >
                   <option value="lb">lb</option>
                   <option value="kg">kg</option>
@@ -198,9 +201,9 @@ function ExerciseList({
       <button
         type="button"
         onClick={addRow}
-        className="self-start text-sm text-blue-600 hover:text-blue-800 font-medium"
+        className="self-start text-sm text-primary-strong hover:opacity-70 font-medium transition"
       >
-        + Add exercise
+        + Agregar ejercicio
       </button>
     </div>
   );
@@ -210,7 +213,7 @@ function ExerciseList({
 // Step indicator
 // ---------------------------------------------------------------------------
 
-const STEPS = ['Warmup', 'Strength / Skill', 'WOD'] as const;
+const STEPS = ['Calentamiento', 'Fuerza / Habilidad', 'WOD'] as const;
 
 function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
   return (
@@ -223,15 +226,15 @@ function StepIndicator({ current }: { current: 1 | 2 | 3 }) {
           <div key={label} className="flex items-center gap-1">
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold
-                ${isActive ? 'bg-black text-white' : isDone ? 'bg-gray-300 text-gray-600' : 'bg-gray-100 text-gray-400'}`}
+                ${isActive ? 'bg-primary-strong text-white' : isDone ? 'bg-secondary text-text-primary' : 'bg-surface-soft text-text-secondary border border-text-secondary/20'}`}
             >
               {stepNum}
             </div>
-            <span className={`text-sm ${isActive ? 'font-semibold' : 'text-gray-400'}`}>
+            <span className={`text-sm ${isActive ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <span className="text-gray-200 mx-2 select-none">›</span>
+              <span className="text-text-secondary/40 mx-2 select-none">›</span>
             )}
           </div>
         );
@@ -316,7 +319,7 @@ export default function LogPage() {
       .single();
 
     if (sessionError || !session) {
-      setError(sessionError?.message ?? 'Failed to create session');
+      setError(sessionError?.message ?? 'No se pudo crear la sesión');
       setIsSaving(false);
       return;
     }
@@ -350,7 +353,7 @@ export default function LogPage() {
       .select('id, block_type');
 
     if (blocksError || !blocks) {
-      setError(blocksError?.message ?? 'Failed to create blocks');
+      setError(blocksError?.message ?? 'No se pudieron crear los bloques');
       setIsSaving(false);
       return;
     }
@@ -400,8 +403,8 @@ export default function LogPage() {
   return (
     <main className="max-w-lg mx-auto px-4 py-8">
       <div className="flex justify-end mb-4">
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-800">
-          ← Home
+        <Link href="/" className="text-sm text-text-secondary hover:text-primary-strong transition">
+          ← Inicio
         </Link>
       </div>
       {step !== 0 && <StepIndicator current={step} />}
@@ -409,17 +412,23 @@ export default function LogPage() {
       {/* ── Step 0: Photo upload ─────────────────────────────── */}
       {step === 0 && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold">Sube la foto del pizarrón</h1>
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
-            className="text-sm"
-          />
+          <h1 className="text-xl font-semibold text-text-primary">Sube la foto del pizarrón</h1>
+
+          <div className="flex flex-col items-center gap-3 border-2 border-dashed border-primary/30 bg-surface-soft rounded-2xl p-6 text-center">
+            <p className="text-sm text-text-secondary">
+              {selectedFile ? selectedFile.name : 'Toma o selecciona una foto del pizarrón'}
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={e => setSelectedFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-text-primary file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-primary/20 file:text-primary-strong file:text-sm file:font-medium hover:file:bg-primary/30 file:transition"
+            />
+          </div>
 
           {parseError && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-error-strong bg-error/15 border border-error/30 rounded-xl px-3 py-2">
               {parseError}
             </p>
           )}
@@ -427,7 +436,11 @@ export default function LogPage() {
           <button
             onClick={handleAnalyzePhoto}
             disabled={isParsingPhoto || !selectedFile}
-            className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-40"
+            className={`px-6 py-2 rounded-xl text-sm font-medium transition active:scale-[0.98] disabled:active:scale-100 ${
+              isParsingPhoto
+                ? 'bg-info text-text-primary disabled:opacity-100'
+                : 'bg-primary-strong text-white hover:opacity-90 disabled:opacity-40'
+            }`}
           >
             {isParsingPhoto ? 'Leyendo el pizarrón...' : 'Analizar foto'}
           </button>
@@ -436,7 +449,7 @@ export default function LogPage() {
             type="button"
             onClick={() => setStep(1)}
             disabled={isParsingPhoto}
-            className="text-sm text-gray-500 hover:text-gray-800 underline self-center disabled:opacity-40"
+            className="text-sm text-text-secondary hover:text-primary-strong underline self-center disabled:opacity-40 transition"
           >
             Omitir y llenar manualmente
           </button>
@@ -446,23 +459,23 @@ export default function LogPage() {
       {/* ── Step 1: Warmup ───────────────────────────────────── */}
       {step === 1 && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold">Warmup</h1>
+          <h1 className="text-xl font-semibold text-text-primary">Calentamiento</h1>
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600">Notes (optional)</label>
+            <label className="text-sm text-text-secondary">Notas (opcional)</label>
             <textarea
               rows={5}
-              placeholder="e.g. 500m row, hip mobility, 3 rounds of..."
+              placeholder="ej. 500m remo, movilidad de cadera, 3 rondas de..."
               value={formData.warmupNotes}
               onChange={e => updateField('warmupNotes', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm resize-none bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
             />
           </div>
           <div className="flex justify-end">
             <button
               onClick={() => setStep(2)}
-              className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800"
+              className="bg-primary-strong text-white px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 active:scale-[0.98] transition"
             >
-              Next →
+              Siguiente →
             </button>
           </div>
         </div>
@@ -471,7 +484,7 @@ export default function LogPage() {
       {/* ── Step 2: Strength / Skill ─────────────────────────── */}
       {step === 2 && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold">Strength / Skill</h1>
+          <h1 className="text-xl font-semibold text-text-primary">Fuerza / Habilidad</h1>
           <ExerciseList
             exercises={formData.strengthExercises}
             onChange={rows => updateField('strengthExercises', rows)}
@@ -479,15 +492,15 @@ export default function LogPage() {
           <div className="flex justify-between">
             <button
               onClick={() => setStep(1)}
-              className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+              className="border border-text-secondary/30 text-text-secondary px-6 py-2 rounded-xl text-sm font-medium hover:border-primary/40 hover:text-primary-strong active:scale-[0.98] transition"
             >
-              ← Back
+              ← Atrás
             </button>
             <button
               onClick={() => setStep(3)}
-              className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800"
+              className="bg-primary-strong text-white px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 active:scale-[0.98] transition"
             >
-              Next →
+              Siguiente →
             </button>
           </div>
         </div>
@@ -496,31 +509,31 @@ export default function LogPage() {
       {/* ── Step 3: WOD ──────────────────────────────────────── */}
       {step === 3 && (
         <div className="flex flex-col gap-6">
-          <h1 className="text-xl font-semibold">WOD</h1>
+          <h1 className="text-xl font-semibold text-text-primary">WOD</h1>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-600">WOD format</label>
+              <label className="text-sm text-text-secondary">Formato del WOD</label>
               <input
                 type="text"
-                placeholder="e.g. For Time, AMRAP 12, 21-15-9"
+                placeholder="ej. For Time, AMRAP 12, 21-15-9"
                 value={formData.wodFormat}
                 onChange={e => updateField('wodFormat', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm text-gray-600">Your result</label>
+              <label className="text-sm text-text-secondary">Tu resultado</label>
               <input
                 type="text"
-                placeholder="e.g. 8:42 or 5 rounds + 3 reps"
+                placeholder="ej. 8:42 o 5 rondas + 3 reps"
                 value={formData.wodResult}
                 onChange={e => updateField('wodResult', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
               />
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-sm text-gray-600">Exercises</label>
+            <label className="text-sm text-text-secondary">Ejercicios</label>
             <ExerciseList
               exercises={formData.wodExercises}
               onChange={rows => updateField('wodExercises', rows)}
@@ -528,7 +541,7 @@ export default function LogPage() {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-error-strong bg-error/15 border border-error/30 rounded-xl px-3 py-2">
               {error}
             </p>
           )}
@@ -537,16 +550,16 @@ export default function LogPage() {
             <button
               onClick={() => setStep(2)}
               disabled={isSaving}
-              className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-40"
+              className="border border-text-secondary/30 text-text-secondary px-6 py-2 rounded-xl text-sm font-medium hover:border-primary/40 hover:text-primary-strong disabled:opacity-40 active:scale-[0.98] transition"
             >
-              ← Back
+              ← Atrás
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-40"
+              className="bg-primary-strong text-white px-6 py-2 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-40 active:scale-[0.98] transition"
             >
-              {isSaving ? 'Saving…' : 'Save Workout'}
+              {isSaving ? 'Guardando…' : 'Guardar entrenamiento'}
             </button>
           </div>
         </div>

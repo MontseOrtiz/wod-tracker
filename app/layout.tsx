@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: "WOD Tracker",
     template: "%s — WOD Tracker",
   },
-  description: "Personal CrossFit workout tracker with photo-based logging",
+  description: "Registro personal de entrenamientos de CrossFit con carga por foto",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
