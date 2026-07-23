@@ -46,17 +46,17 @@ export async function POST(request: Request) {
     formData = await request.formData();
   } catch {
     return NextResponse.json(
-      { error: 'Expected multipart/form-data with an "image" field.' },
+      { error: 'Se esperaba un formulario multipart/form-data con un campo "image".' },
       { status: 400 }
     );
   }
 
   const file = formData.get('image');
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: 'No image file provided.' }, { status: 400 });
+    return NextResponse.json({ error: 'No se proporcionó ninguna imagen.' }, { status: 400 });
   }
   if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'Uploaded file is not an image.' }, { status: 400 });
+    return NextResponse.json({ error: 'El archivo subido no es una imagen.' }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
   if (uploadError) {
     return NextResponse.json(
-      { error: `Failed to upload photo: ${uploadError.message}` },
+      { error: `Error al subir la foto: ${uploadError.message}` },
       { status: 500 }
     );
   }
@@ -115,20 +115,20 @@ export async function POST(request: Request) {
       );
     }
     return NextResponse.json(
-      { error: `Gemini request failed: ${lastError instanceof Error ? lastError.message : 'unknown error'}` },
+      { error: `Error al conectar con Gemini: ${lastError instanceof Error ? lastError.message : 'error desconocido'}` },
       { status: 502 }
     );
   }
 
   if (!responseText) {
-    return NextResponse.json({ error: 'Gemini returned an empty response.' }, { status: 502 });
+    return NextResponse.json({ error: 'Gemini no devolvió ninguna respuesta.' }, { status: 502 });
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(responseText);
   } catch {
-    return NextResponse.json({ error: 'Gemini returned a response that was not valid JSON.' }, { status: 502 });
+    return NextResponse.json({ error: 'Gemini devolvió una respuesta que no es JSON válido.' }, { status: 502 });
   }
 
   return NextResponse.json({ photoUrl: publicUrl, data: parsed });

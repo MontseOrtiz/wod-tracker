@@ -6,19 +6,19 @@ import { supabase } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'History',
+  title: 'Historial',
 };
 
 const PAGE_SIZE = 10;
 
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+  return new Date(year, month - 1, day).toLocaleDateString('es-ES', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -27,9 +27,10 @@ function formatDate(dateStr: string): string {
 }
 
 function formatTime(createdAt: string): string {
-  return new Date(createdAt).toLocaleTimeString('en-US', {
-    hour: 'numeric',
+  return new Date(createdAt).toLocaleTimeString('es-ES', {
+    hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   });
 }
 
@@ -97,38 +98,38 @@ export default async function HistoryPage({
 
   return (
     <main className="max-w-lg mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-xl font-semibold">Workout History</h1>
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-800">
-          ← Home
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-8">
+        <h1 className="text-xl font-semibold text-text-primary">Historial de entrenamientos</h1>
+        <Link href="/" className="text-sm text-text-secondary hover:text-primary-strong transition shrink-0">
+          ← Inicio
         </Link>
       </div>
 
       <Form action="/history" className="flex flex-wrap items-end gap-3 mb-6">
         <input type="hidden" name="page" value="1" />
         <div className="flex flex-col gap-1">
-          <label htmlFor="month" className="text-xs text-gray-400">Month</label>
+          <label htmlFor="month" className="text-xs text-text-secondary">Mes</label>
           <select
             id="month"
             name="month"
             defaultValue={month ?? ''}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+            className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
           >
-            <option value="">All</option>
+            <option value="">Todos</option>
             {availableMonths.map(m => (
               <option key={m} value={m}>{monthLabel(m)}</option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="year" className="text-xs text-gray-400">Year</label>
+          <label htmlFor="year" className="text-xs text-text-secondary">Año</label>
           <select
             id="year"
             name="year"
             defaultValue={year ?? ''}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+            className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
           >
-            <option value="">All</option>
+            <option value="">Todos</option>
             {availableYears.map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
@@ -136,26 +137,26 @@ export default async function HistoryPage({
         </div>
         <button
           type="submit"
-          className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800"
+          className="bg-primary-strong text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 active:scale-[0.98] transition"
         >
-          Filter
+          Filtrar
         </button>
         {(year || month) && (
-          <Link href="/history" className="text-sm text-gray-500 hover:text-gray-800 underline">
-            Clear filter
+          <Link href="/history" className="text-sm text-text-secondary hover:text-primary-strong underline transition">
+            Quitar filtro
           </Link>
         )}
       </Form>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-6">
+        <p className="text-sm text-error-strong bg-error/15 border border-error/30 rounded-xl px-3 py-2 mb-6">
           {error.message}
         </p>
       )}
 
       {!error && sessions?.length === 0 && (
-        <p className="text-sm text-gray-500">
-          {isFiltered ? 'No workouts logged for that month.' : 'No workouts logged yet.'}
+        <p className="text-sm text-text-secondary bg-surface-soft border border-text-secondary/10 rounded-2xl px-4 py-6 text-center">
+          {isFiltered ? 'No hay entrenamientos registrados para ese mes.' : 'Aún no hay entrenamientos registrados.'}
         </p>
       )}
 
@@ -165,13 +166,13 @@ export default async function HistoryPage({
             <Link
               key={session.id}
               href={`/history/${session.id}`}
-              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 bg-surface border border-primary/10 rounded-2xl shadow-[0_1px_3px_rgba(75,68,83,0.06)] hover:shadow-[0_2px_8px_rgba(75,68,83,0.10)] hover:border-primary/30 hover:-translate-y-0.5 transition"
             >
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-text-primary">
                 {formatDate(session.session_date)}
-                <span className="text-gray-400 font-normal"> — {formatTime(session.created_at)}</span>
+                <span className="text-text-secondary font-normal"> — {formatTime(session.created_at)}</span>
               </span>
-              <span className="text-gray-400 text-sm">→</span>
+              <span className="text-primary-strong text-sm">→</span>
             </Link>
           ))}
         </div>
@@ -182,22 +183,22 @@ export default async function HistoryPage({
           {page > 1 ? (
             <Link
               href={buildHref(page - 1, year, month)}
-              className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50"
+              className="text-sm border border-text-secondary/30 text-text-secondary px-4 py-2 rounded-xl font-medium hover:border-primary/40 hover:text-primary-strong transition"
             >
-              ← Previous
+              ← Anterior
             </Link>
           ) : (
             <span />
           )}
-          <span className="text-xs text-gray-400">
-            Page {page} of {totalPages}
+          <span className="text-xs text-text-secondary">
+            Página {page} de {totalPages}
           </span>
           {page < totalPages ? (
             <Link
               href={buildHref(page + 1, year, month)}
-              className="text-sm border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-50"
+              className="text-sm border border-text-secondary/30 text-text-secondary px-4 py-2 rounded-xl font-medium hover:border-primary/40 hover:text-primary-strong transition"
             >
-              Next →
+              Siguiente →
             </Link>
           ) : (
             <span />
