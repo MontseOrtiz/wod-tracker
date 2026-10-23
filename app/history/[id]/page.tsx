@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -169,6 +170,23 @@ export default async function SessionDetailPage({
             </section>
           );
         })}
+
+        {session.whiteboard_photo_url && (
+          <details className="bg-surface border border-primary/10 rounded-2xl p-4 shadow-[0_1px_3px_rgba(75,68,83,0.06)]">
+            <summary className="cursor-pointer text-xs font-semibold text-text-secondary uppercase tracking-wide">
+              Foto del entrenamiento
+            </summary>
+            {/* unoptimized: users may upload HEIC, which the Next image optimizer can't process */}
+            <Image
+              src={session.whiteboard_photo_url}
+              alt={`Entrenamiento del ${formatDate(session.session_date)}`}
+              width={1200}
+              height={900}
+              unoptimized
+              className="mt-3 w-full h-auto rounded-xl"
+            />
+          </details>
+        )}
       </div>
     </main>
   );
