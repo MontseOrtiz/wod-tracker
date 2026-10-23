@@ -1,7 +1,10 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Block, Exercise } from '@/types/database';
+import type { Tables } from '@/types/supabase';
+import type { Block } from '@/types/database';
+import { formatRepScheme, totalReps } from '@/lib/rep-scheme';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,17 +22,21 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatWeight(weight: number | null, unit: 'kg' | 'lb' | '%' | null): string {
+function formatWeight(weight: number | null, unit: string | null): string {
   if (weight === null) return '';
   if (unit === '%') return `${weight}%`;
   if (unit) return `${weight} ${unit}`;
   return `${weight}`;
 }
 
-function formatExerciseLine(ex: Exercise): string {
+function formatExerciseLine(ex: Tables<'exercises'>): string {
   const parts: string[] = [];
-  if (ex.sets) parts.push(`${ex.sets} series`);
-  if (ex.reps) parts.push(`${ex.reps} reps`);
+  if (ex.rep_scheme) {
+    parts.push(formatRepScheme(ex.rep_scheme), `${totalReps(ex.rep_scheme)} reps`);
+  } else {
+    if (ex.sets) parts.push(`${ex.sets} series`);
+    if (ex.reps) parts.push(`${ex.reps} reps`);
+  }
   const weightStr = formatWeight(ex.weight, ex.unit);
   if (weightStr) parts.push(`@ ${weightStr}`);
   return parts.join(' · ');
@@ -163,6 +170,23 @@ export default async function SessionDetailPage({
             </section>
           );
         })}
+
+        {session.whiteboard_photo_url && (
+          <details className="bg-surface border border-primary/10 rounded-2xl p-4 shadow-[0_1px_3px_rgba(75,68,83,0.06)]">
+            <summary className="cursor-pointer text-xs font-semibold text-text-secondary uppercase tracking-wide">
+              Foto del entrenamiento
+            </summary>
+            {/* unoptimized: users may upload HEIC, which the Next image optimizer can't process */}
+            <Image
+              src={session.whiteboard_photo_url}
+              alt={`Entrenamiento del ${formatDate(session.session_date)}`}
+              width={1200}
+              height={900}
+              unoptimized
+              className="mt-3 w-full h-auto rounded-xl"
+            />
+          </details>
+        )}
       </div>
     </main>
   );
