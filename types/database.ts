@@ -1,102 +1,11 @@
-export type Database = {
-  public: {
-    Tables: {
-      sessions: {
-        Row: {
-          id: string;
-          session_date: string;
-          whiteboard_photo_url: string | null;
-          notes: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          session_date: string;
-          whiteboard_photo_url?: string | null;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          session_date?: string;
-          whiteboard_photo_url?: string | null;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      blocks: {
-        Row: {
-          id: string;
-          session_id: string;
-          block_type: "warmup" | "strength_skill" | "wod";
-          wod_format: string | null;
-          result: string | null;
-          notes: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          session_id: string;
-          block_type: "warmup" | "strength_skill" | "wod";
-          wod_format?: string | null;
-          result?: string | null;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          session_id?: string;
-          block_type?: "warmup" | "strength_skill" | "wod";
-          wod_format?: string | null;
-          result?: string | null;
-          notes?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      exercises: {
-        Row: {
-          id: string;
-          block_id: string;
-          exercise_name: string;
-          weight: number | null;
-          reps: number | null;
-          sets: number | null;
-          unit: 'kg' | 'lb' | '%' | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          block_id: string;
-          exercise_name: string;
-          weight?: number | null;
-          reps?: number | null;
-          sets?: number | null;
-          unit?: 'kg' | 'lb' | '%' | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          block_id?: string;
-          exercise_name?: string;
-          weight?: number | null;
-          reps?: number | null;
-          sets?: number | null;
-          unit?: 'kg' | 'lb' | '%' | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: Record<string, never>;
-    CompositeTypes: Record<string, never>;
-  };
-};
+import type { Tables } from "./supabase";
 
-// Convenience types — use these throughout the app instead of the long Database path
-export type Session = Database["public"]["Tables"]["sessions"]["Row"];
-export type Block = Database["public"]["Tables"]["blocks"]["Row"];
-export type Exercise = Database["public"]["Tables"]["exercises"]["Row"];
+// Postgres stores these as `text` guarded by CHECK constraints, so the generated
+// types see plain `string`. Narrow them here; `types/supabase.ts` is generated
+// (npm run db:types) and must not be edited by hand.
+export type BlockType = "warmup" | "strength_skill" | "wod";
+export type WeightUnit = "kg" | "lb" | "%";
+
+export type Session = Tables<"sessions">;
+export type Block = Omit<Tables<"blocks">, "block_type"> & { block_type: BlockType };
+export type Exercise = Omit<Tables<"exercises">, "unit"> & { unit: WeightUnit | null };

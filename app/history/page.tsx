@@ -26,7 +26,8 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatTime(createdAt: string): string {
+function formatTime(createdAt: string | null): string | null {
+  if (!createdAt) return null;
   return new Date(createdAt).toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
@@ -170,7 +171,9 @@ export default async function HistoryPage({
             >
               <span className="text-sm font-medium text-text-primary">
                 {formatDate(session.session_date)}
-                <span className="text-text-secondary font-normal"> — {formatTime(session.created_at)}</span>
+                {formatTime(session.created_at) && (
+                  <span className="text-text-secondary font-normal"> — {formatTime(session.created_at)}</span>
+                )}
               </span>
               <span className="text-primary-strong text-sm">→</span>
             </Link>

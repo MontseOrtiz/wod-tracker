@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import type { Block, Exercise } from '@/types/database';
+import type { Tables } from '@/types/supabase';
+import type { Block } from '@/types/database';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,14 +20,14 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function formatWeight(weight: number | null, unit: 'kg' | 'lb' | '%' | null): string {
+function formatWeight(weight: number | null, unit: string | null): string {
   if (weight === null) return '';
   if (unit === '%') return `${weight}%`;
   if (unit) return `${weight} ${unit}`;
   return `${weight}`;
 }
 
-function formatExerciseLine(ex: Exercise): string {
+function formatExerciseLine(ex: Tables<'exercises'>): string {
   const parts: string[] = [];
   if (ex.sets) parts.push(`${ex.sets} series`);
   if (ex.reps) parts.push(`${ex.reps} reps`);
