@@ -1,5 +1,6 @@
 import type { ParsedExercise } from '@/lib/workout-schema';
 import type { SaveSessionInput } from '@/lib/session-schema';
+import { formatRepScheme, parseRepScheme } from '@/lib/rep-scheme';
 
 export type ExerciseRow = {
   id: string;         // local key only — never sent to the database
@@ -8,6 +9,8 @@ export type ExerciseRow = {
   reps: string;
   sets: string;
   unit: 'kg' | 'lb' | '%';
+  isLadder: boolean;  // true: `repScheme` replaces sets/reps
+  repScheme: string;  // free text such as "10-15-20-15-10"
 };
 
 export type WorkoutForm = {
@@ -23,7 +26,7 @@ export type WorkoutForm = {
 // ---------------------------------------------------------------------------
 
 export function makeExercise(): ExerciseRow {
-  return { id: crypto.randomUUID(), exercise_name: '', weight: '', reps: '', sets: '', unit: 'lb' };
+  return { id: crypto.randomUUID(), exercise_name: '', weight: '', reps: '', sets: '', unit: 'lb', isLadder: false, repScheme: '' };
 }
 
 export function getInitialData(): WorkoutForm {
@@ -63,6 +66,8 @@ export function toExerciseRows(exercises: ParsedExercise[]): ExerciseRow[] {
     reps: ex.reps != null ? String(ex.reps) : '',
     sets: ex.sets != null ? String(ex.sets) : '',
     unit: ex.unit ?? 'lb',
+    isLadder: ex.rep_scheme !== null,
+    repScheme: ex.rep_scheme ? formatRepScheme(ex.rep_scheme) : '',
   }));
 }
 
@@ -70,13 +75,18 @@ export function toExerciseRows(exercises: ParsedExercise[]): ExerciseRow[] {
 function toPayload(rows: ExerciseRow[]): SaveSessionInput['strength'] {
   return rows
     .filter(ex => ex.exercise_name.trim())
-    .map(ex => ({
-      exercise_name: ex.exercise_name.trim(),
-      sets: toInt(ex.sets),
-      reps: toInt(ex.reps),
-      weight: toFloat(ex.weight),
-      unit: toFloat(ex.weight) !== null ? ex.unit : null,
-    }));
+    .map(ex => {
+      // An unreadable scheme is dropped rather than saved half-right.
+      const scheme = ex.isLadder ? parseRepScheme(ex.repScheme) : null;
+      return {
+        exercise_name: ex.exercise_name.trim(),
+        sets: scheme ? scheme.length : ex.isLadder ? null : toInt(ex.sets),
+        reps: scheme || ex.isLadder ? null : toInt(ex.reps),
+        rep_scheme: scheme,
+        weight: toFloat(ex.weight),
+        unit: toFloat(ex.weight) !== null ? ex.unit : null,
+      };
+    });
 }
 
 export function buildSavePayload(form: WorkoutForm, sessionDate: string): SaveSessionInput {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_ROUNDS, MAX_REPS_PER_ROUND } from './rep-scheme';
 
 // The model is unreliable on details ("135" as a string, "lbs", "10-12" reps), so each
 // field is normalised and anything unrecoverable becomes null instead of failing the
@@ -26,13 +27,31 @@ const weight = z.preprocess(toNumber, z.number().nonnegative().nullable()).catch
 const count = z.preprocess(toNumber, z.number().int().nonnegative().nullable()).catch(null);
 const unit = z.preprocess(toUnit, z.enum(['kg', 'lb', '%']).nullable()).catch(null);
 
+// Reps of each round for ladders (10-15-20-15-10); anything malformed becomes null.
+const repScheme = z
+  .array(z.number().int().min(1).max(MAX_REPS_PER_ROUND))
+  .min(1)
+  .max(MAX_ROUNDS)
+  .nullable()
+  .catch(null);
+
 const exerciseSchema = z.object({
   exercise_name: z.string().trim().min(1),
   weight,
   unit,
   reps: count,
   sets: count,
+  rep_scheme: z.preprocess(v => (v === undefined ? null : v), repScheme),
 });
+
+// One round is just plain reps; two or more is a ladder, where `sets` is the round
+// count and `reps` stays empty (same convention as the database).
+function normaliseReps<T extends z.infer<typeof exerciseSchema>>(ex: T): T {
+  const scheme = ex.rep_scheme;
+  if (!scheme) return ex;
+  if (scheme.length === 1) return { ...ex, rep_scheme: null, reps: ex.reps ?? scheme[0] };
+  return { ...ex, sets: scheme.length, reps: null };
+}
 
 // Drops malformed entries (e.g. no name) instead of failing the whole array.
 const exerciseList = z
@@ -43,7 +62,7 @@ const exerciseList = z
       const parsed = exerciseSchema.safeParse(item);
       // A unit without a weight is noise.
       return parsed.success
-        ? [{ ...parsed.data, unit: parsed.data.weight === null ? null : parsed.data.unit }]
+        ? [normaliseReps({ ...parsed.data, unit: parsed.data.weight === null ? null : parsed.data.unit })]
         : [];
     })
   );
@@ -71,6 +90,7 @@ const wireExercise = z.object({
   unit: z.enum(['kg', 'lb', '%']).nullable(),
   reps: z.number().nullable(),
   sets: z.number().nullable(),
+  rep_scheme: z.array(z.number()).nullable(),
 });
 
 export const workoutResponseSchema = z.object({

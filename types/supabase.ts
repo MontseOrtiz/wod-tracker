@@ -58,6 +58,7 @@ export type Database = {
           created_at: string | null
           exercise_name: string
           id: string
+          rep_scheme: number[] | null
           reps: number | null
           sets: number | null
           unit: string | null
@@ -68,6 +69,7 @@ export type Database = {
           created_at?: string | null
           exercise_name: string
           id?: string
+          rep_scheme?: number[] | null
           reps?: number | null
           sets?: number | null
           unit?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           created_at?: string | null
           exercise_name?: string
           id?: string
+          rep_scheme?: number[] | null
           reps?: number | null
           sets?: number | null
           unit?: string | null

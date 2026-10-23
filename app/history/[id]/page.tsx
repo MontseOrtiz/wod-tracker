@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Tables } from '@/types/supabase';
 import type { Block } from '@/types/database';
+import { formatRepScheme, totalReps } from '@/lib/rep-scheme';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +30,12 @@ function formatWeight(weight: number | null, unit: string | null): string {
 
 function formatExerciseLine(ex: Tables<'exercises'>): string {
   const parts: string[] = [];
-  if (ex.sets) parts.push(`${ex.sets} series`);
-  if (ex.reps) parts.push(`${ex.reps} reps`);
+  if (ex.rep_scheme) {
+    parts.push(formatRepScheme(ex.rep_scheme), `${totalReps(ex.rep_scheme)} reps`);
+  } else {
+    if (ex.sets) parts.push(`${ex.sets} series`);
+    if (ex.reps) parts.push(`${ex.reps} reps`);
+  }
   const weightStr = formatWeight(ex.weight, ex.unit);
   if (weightStr) parts.push(`@ ${weightStr}`);
   return parts.join(' · ');

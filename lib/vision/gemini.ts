@@ -21,6 +21,7 @@ Rules:
 - Never invent exercises that aren't in the photo.
 - If a section isn't visible or doesn't apply, use an empty string or an empty array.
 - "weight" and "unit" must be null when no weight is written for that exercise.
+- Reps: for a plain "5 x 5" use "sets" and "reps" and set "rep_scheme" to null. For a ladder or descending scheme such as 21-15-9 or 10-15-20-15-10, put the reps of each round in order in "rep_scheme" and set "reps" and "sets" to null.
 - "strength_skill" holds the strength or skill work. "wod" holds the metcon, with its format (e.g. "For Time", "AMRAP 12", "21-15-9") in "wod_format".`;
 
 // Gemini rejects the `$schema` key that Zod adds.
