@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { validateImage } from '@/lib/upload-validation';
 import { todayLocal } from '@/lib/date';
+import type { ParsedWorkout, ParsedExercise } from '@/lib/workout-schema';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,28 +28,6 @@ type FormData = {
   wodFormat: string;
   wodResult: string;
   wodExercises: ExerciseRow[];
-};
-
-// ---------------------------------------------------------------------------
-// Gemini parse-workout response shape
-// ---------------------------------------------------------------------------
-
-type GeminiExercise = {
-  exercise_name: string;
-  weight: number | null;
-  unit: 'kg' | 'lb' | '%' | null;
-  reps: number | null;
-  sets: number | null;
-};
-
-type GeminiParsedWorkout = {
-  warmup_notes: string;
-  strength_skill: GeminiExercise[];
-  wod: {
-    wod_format: string;
-    result: string;
-    exercises: GeminiExercise[];
-  };
 };
 
 // ---------------------------------------------------------------------------
@@ -88,11 +67,11 @@ function hasValidWorkoutData(formData: FormData): boolean {
   return hasWarmup || hasStrength || hasWod;
 }
 
-function toExerciseRows(exercises: GeminiExercise[] | undefined): ExerciseRow[] {
-  if (!exercises || exercises.length === 0) return [makeExercise()];
+function toExerciseRows(exercises: ParsedExercise[]): ExerciseRow[] {
+  if (exercises.length === 0) return [makeExercise()];
   return exercises.map(ex => ({
     id: crypto.randomUUID(),
-    exercise_name: ex.exercise_name ?? '',
+    exercise_name: ex.exercise_name,
     weight: ex.weight != null ? String(ex.weight) : '',
     reps: ex.reps != null ? String(ex.reps) : '',
     sets: ex.sets != null ? String(ex.sets) : '',
@@ -292,15 +271,15 @@ export default function LogPage() {
         return;
       }
 
-      const { photoUrl, data } = json as { photoUrl: string; data: GeminiParsedWorkout };
+      const { photoUrl, data } = json as { photoUrl: string; data: ParsedWorkout };
 
       setFormData(prev => ({
         ...prev,
         photoUrl,
-        warmupNotes: data.warmup_notes ?? '',
+        warmupNotes: data.warmup_notes,
         strengthExercises: toExerciseRows(data.strength_skill),
-        wodFormat: data.wod?.wod_format ?? '',
-        wodExercises: toExerciseRows(data.wod?.exercises),
+        wodFormat: data.wod.wod_format,
+        wodExercises: toExerciseRows(data.wod.exercises),
       }));
       setStep(1);
     } catch {
