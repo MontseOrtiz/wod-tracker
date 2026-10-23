@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ExerciseList } from '@/components/log/ExerciseList';
 import { StepIndicator } from '@/components/log/StepIndicator';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 import { useWorkoutLog } from './useWorkoutLog';
 
 export default function LogPage() {
@@ -23,7 +24,8 @@ export default function LogPage() {
 
   return (
     <main className="max-w-lg mx-auto px-4 py-8">
-      <div className="flex justify-end mb-4">
+      <div className="flex items-center justify-between mb-4">
+        <LogoutButton />
         <Link href="/" className="text-sm text-text-secondary hover:text-primary-strong transition">
           ← Inicio
         </Link>

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth-server';
 import { validateImage } from '@/lib/upload-validation';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { parseWhiteboard, VisionUnavailableError } from '@/lib/vision';
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
 const RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 };
 
 export async function POST(request: Request) {
+  const denied = await requireAuth();
+  if (denied) return denied;
+
   // Checked before reading the body so rejected requests stay cheap.
   const { allowed, retryAfterSeconds } = rateLimit(getClientIp(request), RATE_LIMIT);
   if (!allowed) {

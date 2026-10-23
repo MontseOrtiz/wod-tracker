@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase-server';
+import { requireAuth } from '@/lib/auth-server';
 import { saveSessionSchema } from '@/lib/session-schema';
 import { validateImage } from '@/lib/upload-validation';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
@@ -15,6 +16,9 @@ function fail(error: string, status: number) {
 }
 
 export async function POST(request: Request) {
+  const denied = await requireAuth();
+  if (denied) return denied;
+
   const { allowed, retryAfterSeconds } = rateLimit(`save:${getClientIp(request)}`, RATE_LIMIT);
   if (!allowed) {
     return NextResponse.json(
