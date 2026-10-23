@@ -96,6 +96,24 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          ip: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           created_at: string | null
