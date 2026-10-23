@@ -4,6 +4,7 @@ import { GoogleGenAI, createUserContent, createPartFromBase64, ApiError } from '
 import { supabase } from '@/lib/supabase';
 import { validateImage } from '@/lib/upload-validation';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
+import { parsedWorkoutSchema } from '@/lib/workout-schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,5 +147,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Gemini devolvió una respuesta que no es JSON válido.' }, { status: 502 });
   }
 
-  return NextResponse.json({ photoUrl: publicUrl, data: parsed });
+  const workout = parsedWorkoutSchema.safeParse(parsed);
+  if (!workout.success) {
+    return NextResponse.json(
+      { error: 'No se pudo interpretar el pizarrón. Intenta con otra foto o llénalo manualmente.' },
+      { status: 502 }
+    );
+  }
+
+  return NextResponse.json({ photoUrl: publicUrl, data: workout.data });
 }
