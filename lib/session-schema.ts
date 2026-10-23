@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MIN_ROUNDS, MAX_ROUNDS, MAX_REPS_PER_ROUND } from './rep-scheme';
 
 // Everything the browser sends is untrusted: this is the single gate before the
 // database function runs.
@@ -9,9 +10,20 @@ const exerciseSchema = z
     unit: z.enum(['kg', 'lb', '%']).nullable(),
     reps: z.number().int().nonnegative().max(10_000).nullable(),
     sets: z.number().int().nonnegative().max(10_000).nullable(),
+    rep_scheme: z
+      .array(z.number().int().min(1).max(MAX_REPS_PER_ROUND))
+      .min(MIN_ROUNDS)
+      .max(MAX_ROUNDS)
+      .nullish(),
   })
-  // A unit without a weight is noise.
-  .transform(ex => ({ ...ex, unit: ex.weight === null ? null : ex.unit }));
+  .transform(ex => ({
+    ...ex,
+    // A unit without a weight is noise.
+    unit: ex.weight === null ? null : ex.unit,
+    rep_scheme: ex.rep_scheme ?? null,
+    // With a ladder, `sets` is the number of rounds and `reps` stays empty.
+    ...(ex.rep_scheme ? { sets: ex.rep_scheme.length, reps: null } : {}),
+  }));
 
 const isoDate = z
   .string()

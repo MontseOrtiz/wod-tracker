@@ -1,4 +1,5 @@
 import { makeExercise, type ExerciseRow } from '@/lib/log-form';
+import { formatRepScheme, parseRepScheme, totalReps } from '@/lib/rep-scheme';
 
 export function ExerciseList({
   exercises,
@@ -7,7 +8,7 @@ export function ExerciseList({
   exercises: ExerciseRow[];
   onChange: (rows: ExerciseRow[]) => void;
 }) {
-  function updateField(id: string, field: keyof ExerciseRow, value: string) {
+  function updateField<K extends keyof ExerciseRow>(id: string, field: K, value: ExerciseRow[K]) {
     onChange(exercises.map(ex => (ex.id === id ? { ...ex, [field]: value } : ex)));
   }
 
@@ -31,15 +32,29 @@ export function ExerciseList({
             <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
               Ejercicio {index + 1}
             </span>
-            {exercises.length > 1 && (
+            <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => removeRow(ex.id)}
-                className="text-xs text-error-strong hover:opacity-70 transition"
+                onClick={() => updateField(ex.id, 'isLadder', !ex.isLadder)}
+                aria-pressed={ex.isLadder}
+                className={`text-xs font-medium rounded-lg px-3 py-2 border transition ${
+                  ex.isLadder
+                    ? 'bg-primary/15 border-primary/40 text-primary-strong'
+                    : 'border-text-secondary/25 text-text-secondary hover:text-primary-strong'
+                }`}
               >
-                Eliminar
+                Escalera
               </button>
-            )}
+              {exercises.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(ex.id)}
+                  className="text-xs text-error-strong hover:opacity-70 transition px-3 py-2"
+                >
+                  Eliminar
+                </button>
+              )}
+            </div>
           </div>
           <input
             type="text"
@@ -49,6 +64,23 @@ export function ExerciseList({
             className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
           />
           <div className="grid grid-cols-3 gap-2">
+            {ex.isLadder ? (
+              <div className="col-span-2 flex flex-col gap-1">
+                <label htmlFor={`scheme-${ex.id}`} className="text-xs text-text-secondary">
+                  Repeticiones por ronda
+                </label>
+                <input
+                  id={`scheme-${ex.id}`}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="10-15-20-15-10"
+                  value={ex.repScheme}
+                  onChange={e => updateField(ex.id, 'repScheme', e.target.value)}
+                  className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
+                />
+              </div>
+            ) : (
+              <>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-text-secondary">Series</label>
               <input
@@ -71,6 +103,8 @@ export function ExerciseList({
                 className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
               />
             </div>
+              </>
+            )}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-text-secondary">Peso</label>
               <div className="flex gap-1">
@@ -84,7 +118,7 @@ export function ExerciseList({
                 />
                 <select
                   value={ex.unit}
-                  onChange={e => updateField(ex.id, 'unit', e.target.value)}
+                  onChange={e => updateField(ex.id, 'unit', e.target.value as ExerciseRow['unit'])}
                   className="border border-text-secondary/25 rounded-lg px-2 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
                 >
                   <option value="lb">lb</option>
@@ -94,6 +128,16 @@ export function ExerciseList({
               </div>
             </div>
           </div>
+          {ex.isLadder && ex.repScheme.trim() !== '' && (
+            <p className="text-xs text-text-secondary" aria-live="polite">
+              {(() => {
+                const scheme = parseRepScheme(ex.repScheme);
+                return scheme
+                  ? `${formatRepScheme(scheme, ' · ')} — ${scheme.length} rondas, ${totalReps(scheme)} reps`
+                  : 'Escribe al menos 2 rondas separadas por guiones, ej. 21-15-9';
+              })()}
+            </p>
+          )}
         </div>
       ))}
       <button
