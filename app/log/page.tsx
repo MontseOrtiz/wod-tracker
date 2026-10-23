@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { validateImage } from '@/lib/upload-validation';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -264,6 +265,13 @@ export default function LogPage() {
   async function handleAnalyzePhoto() {
     if (!selectedFile) {
       setParseError('Selecciona una foto primero.');
+      return;
+    }
+
+    // Fail fast with the same rules the server enforces.
+    const validation = validateImage(selectedFile);
+    if (!validation.ok) {
+      setParseError(validation.error);
       return;
     }
 
