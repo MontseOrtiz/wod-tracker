@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { validateImage } from '@/lib/upload-validation';
 import { todayLocal } from '@/lib/date';
 import type { ParsedWorkout, ParsedExercise } from '@/lib/workout-schema';
+import type { SaveSessionInput } from '@/lib/session-schema';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,7 +22,6 @@ type ExerciseRow = {
 };
 
 type FormData = {
-  photoUrl: string | null;
   warmupNotes: string;
   strengthExercises: ExerciseRow[];
   wodFormat: string;
@@ -40,7 +39,6 @@ function makeExercise(): ExerciseRow {
 
 function getInitialData(): FormData {
   return {
-    photoUrl: null,
     warmupNotes: '',
     strengthExercises: [makeExercise()],
     wodFormat: '',
@@ -271,11 +269,10 @@ export default function LogPage() {
         return;
       }
 
-      const { photoUrl, data } = json as { photoUrl: string; data: ParsedWorkout };
+      const { data } = json as { data: ParsedWorkout };
 
       setFormData(prev => ({
         ...prev,
-        photoUrl,
         warmupNotes: data.warmup_notes,
         strengthExercises: toExerciseRows(data.strength_skill),
         wodFormat: data.wod.wod_format,
@@ -298,91 +295,43 @@ export default function LogPage() {
     setIsSaving(true);
     setError(null);
 
-    // 1 — Insert the session row
-    const today = todayLocal();
-    const { data: session, error: sessionError } = await supabase
-      .from('sessions')
-      .insert({ session_date: today, whiteboard_photo_url: formData.photoUrl, notes: null })
-      .select('id')
-      .single();
-
-    if (sessionError || !session) {
-      setError(sessionError?.message ?? 'No se pudo crear la sesión');
-      setIsSaving(false);
-      return;
-    }
-
-    // 2 — Insert the 3 block rows
-    const { data: blocks, error: blocksError } = await supabase
-      .from('blocks')
-      .insert([
-        {
-          session_id: session.id,
-          block_type: 'warmup' as const,
-          notes: formData.warmupNotes.trim() || null,
-          wod_format: null,
-          result: null,
-        },
-        {
-          session_id: session.id,
-          block_type: 'strength_skill' as const,
-          notes: null,
-          wod_format: null,
-          result: null,
-        },
-        {
-          session_id: session.id,
-          block_type: 'wod' as const,
-          notes: null,
-          wod_format: formData.wodFormat.trim() || null,
-          result: formData.wodResult.trim() || null,
-        },
-      ])
-      .select('id, block_type');
-
-    if (blocksError || !blocks) {
-      setError(blocksError?.message ?? 'No se pudieron crear los bloques');
-      setIsSaving(false);
-      return;
-    }
-
-    const strengthBlock = blocks.find(b => b.block_type === 'strength_skill')!;
-    const wodBlock = blocks.find(b => b.block_type === 'wod')!;
-
-    // 3 — Insert exercises (skip rows where the name is empty)
-    const exercisesToInsert = [
-      ...formData.strengthExercises
+    const toPayload = (rows: ExerciseRow[]) =>
+      rows
         .filter(ex => ex.exercise_name.trim())
         .map(ex => ({
-          block_id: strengthBlock.id,
           exercise_name: ex.exercise_name.trim(),
           sets: toInt(ex.sets),
           reps: toInt(ex.reps),
           weight: toFloat(ex.weight),
           unit: toFloat(ex.weight) !== null ? ex.unit : null,
-        })),
-      ...formData.wodExercises
-        .filter(ex => ex.exercise_name.trim())
-        .map(ex => ({
-          block_id: wodBlock.id,
-          exercise_name: ex.exercise_name.trim(),
-          sets: toInt(ex.sets),
-          reps: toInt(ex.reps),
-          weight: toFloat(ex.weight),
-          unit: toFloat(ex.weight) !== null ? ex.unit : null,
-        })),
-    ];
+        }));
 
-    if (exercisesToInsert.length > 0) {
-      const { error: exercisesError } = await supabase
-        .from('exercises')
-        .insert(exercisesToInsert);
+    const body = new FormData();
+    body.append(
+      'payload',
+      JSON.stringify({
+        session_date: todayLocal(),
+        warmup_notes: formData.warmupNotes,
+        wod_format: formData.wodFormat,
+        wod_result: formData.wodResult,
+        strength: toPayload(formData.strengthExercises),
+        wod: toPayload(formData.wodExercises),
+      } satisfies SaveSessionInput)
+    );
+    if (selectedFile) body.append('photo', selectedFile);
 
-      if (exercisesError) {
-        setError(exercisesError.message);
+    try {
+      const res = await fetch('/api/sessions', { method: 'POST', body });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setError(json?.error ?? 'No se pudo guardar el entrenamiento.');
         setIsSaving(false);
         return;
       }
+    } catch {
+      setError('No se pudo conectar con el servidor. Intenta de nuevo.');
+      setIsSaving(false);
+      return;
     }
 
     router.push('/log/success');
@@ -435,7 +384,10 @@ export default function LogPage() {
 
           <button
             type="button"
-            onClick={() => setStep(1)}
+            onClick={() => {
+              setSelectedFile(null);
+              setStep(1);
+            }}
             disabled={isParsingPhoto}
             className="text-sm text-text-secondary hover:text-primary-strong underline self-center disabled:opacity-40 transition"
           >

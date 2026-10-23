@@ -1,6 +1,4 @@
-import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
 import { validateImage } from '@/lib/upload-validation';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 import { parseWhiteboard, VisionUnavailableError } from '@/lib/vision';
@@ -41,29 +39,10 @@ export async function POST(request: Request) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  // 1 — Upload the photo to Supabase Storage
-  const { extension } = validation;
-  const path = `${randomUUID()}.${extension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from('whiteboard-photos')
-    .upload(path, buffer, { contentType: file.type });
-
-  if (uploadError) {
-    return NextResponse.json(
-      { error: `Error al subir la foto: ${uploadError.message}` },
-      { status: 500 }
-    );
-  }
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from('whiteboard-photos').getPublicUrl(path);
-
-  // 2 — Read the workout from the photo
+  // The photo is not stored here; it is uploaded together with the workout on save.
   try {
     const data = await parseWhiteboard({ data: buffer, mimeType: file.type });
-    return NextResponse.json({ photoUrl: publicUrl, data });
+    return NextResponse.json({ data });
   } catch (err) {
     if (err instanceof VisionUnavailableError) {
       return NextResponse.json(
