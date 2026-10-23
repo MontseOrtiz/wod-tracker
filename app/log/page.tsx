@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { validateImage } from '@/lib/upload-validation';
+import { todayLocal } from '@/lib/date';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -319,7 +320,7 @@ export default function LogPage() {
     setError(null);
 
     // 1 — Insert the session row
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayLocal();
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
       .insert({ session_date: today, whiteboard_photo_url: formData.photoUrl, notes: null })
