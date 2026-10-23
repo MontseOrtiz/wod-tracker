@@ -2,8 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { GoogleGenAI, createUserContent, createPartFromBase64, ApiError } from '@google/genai';
 import { supabase } from '@/lib/supabase';
+import { validateImage } from '@/lib/upload-validation';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
+
+const RATE_LIMIT = { limit: 5, windowMs: 10 * 60 * 1000 };
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -41,6 +45,15 @@ Rules:
 - "weight" and "unit" should be null when no weight is written for that exercise.`;
 
 export async function POST(request: Request) {
+  // Checked before reading the body so rejected requests stay cheap.
+  const { allowed, retryAfterSeconds } = rateLimit(getClientIp(request), RATE_LIMIT);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Espera un momento e inténtalo de nuevo.' },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } }
+    );
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -55,14 +68,16 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'No se proporcionó ninguna imagen.' }, { status: 400 });
   }
-  if (!file.type.startsWith('image/')) {
-    return NextResponse.json({ error: 'El archivo subido no es una imagen.' }, { status: 400 });
+
+  const validation = validateImage(file);
+  if (!validation.ok) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
   // 1 — Upload the photo to Supabase Storage
-  const extension = file.type.split('/')[1] ?? 'jpg';
+  const { extension } = validation;
   const path = `${randomUUID()}.${extension}`;
 
   const { error: uploadError } = await supabase.storage
