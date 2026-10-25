@@ -44,6 +44,7 @@ app/
   log/                 wizard (page + hook useWorkoutLog)
   history/             listado paginado y detalle
 components/log/        ExerciseList, StepIndicator
+components/ui/         patrón geométrico, logo, medalla, navegación
 lib/
   vision/              interfaz + implementación de Gemini
   *-schema.ts          esquemas Zod (respuesta del modelo / payload de guardado)
@@ -63,6 +64,18 @@ types/supabase.ts      generado (npm run db:types)
 - **Rate limit en memoria** (5 lecturas de foto y 20 guardados cada 10 min por IP, además del PIN). En serverless cada instancia lleva su propio contador, así que frena abuso casual pero no a alguien decidido; para garantizarlo haría falta un almacén compartido (Upstash, Vercel Firewall).
 - **Las fotos viven en un bucket público** (se muestran por su URL).
 - **Privacidad:** la foto se envía a la API de Gemini. Revisa los términos de tu nivel de uso antes de subir fotos con personas.
+
+## Diseño
+
+Estilo retro geométrico de los 70, pensado para que no parezca una app de ejercicio típica: patrones de cuadrícula, formas redondeadas, píldoras y mucho espacio en crema.
+
+- **Paleta estricta de seis colores** (`app/globals.css`): crema `#FAF0D7` (fondo), amarillo `#FFC31B` (acciones), azul `#006994` (navegación y estructura), rosa `#FF69B4` y rojo `#E5340B` (acentos y alertas) y carbón cálido `#3F362A` (texto). Sin negro ni blanco puro, sin degradados y sin sombras.
+- **El contraste se midió, no se asumió.** Carbón sobre crema 10.4, sobre amarillo 7.4; crema sobre azul 5.4. Rosa y rojo no llegan a AA como texto sobre crema (2.3 y 3.8), así que **nunca se usan como color de texto**: las alertas llevan texto carbón con borde y marca rojos. El amarillo apenas se distingue de la crema (1.4), así que todo botón amarillo lleva borde carbón.
+- **Un solo tema, claro, a propósito.** La paleta es estricta y de base crema; un modo oscuro obligaría a salirse de ella.
+- **Patrón geométrico reutilizable** (`components/ui/GeometricPattern.tsx`): SVG determinista (cuadrados amarillos, líneas azules y algunas celdas cambiadas por triángulos y círculos rosas o rojos). Es solo decoración: el contenido siempre va sobre un panel crema.
+- **Movimiento con motivo y opcional:** el patrón del inicio se mece, los botones rebotan al pulsarlos y la medalla aparece al guardar. Todo se desactiva con `prefers-reduced-motion`.
+- **Accesibilidad:** etiquetas asociadas a cada campo, objetivos táctiles de al menos 44 px (verificado a 360 px de ancho, sin desbordes), foco azul visible y progreso del asistente anunciado con `aria-current`.
+- Tipografía Poppins, esquinas de 16 a 24 px y botones en píldora.
 
 ## Desarrollo
 
