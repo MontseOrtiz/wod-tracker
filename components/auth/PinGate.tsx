@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { GeometricPattern } from '@/components/ui/GeometricPattern';
 
 export function PinGate() {
   const router = useRouter();
@@ -36,17 +37,21 @@ export function PinGate() {
   }
 
   return (
-    <main className="max-w-lg mx-auto px-4 py-16 flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6">
+      <div className="h-28 overflow-hidden rounded-3xl border-2 border-ink">
+        <GeometricPattern animated cols={12} rows={4} seed={4} className="h-full w-full" />
+      </div>
+
       <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold text-text-primary">Acceso del propietario</h1>
-        <p className="text-sm text-text-secondary">
-          Registrar entrenamientos requiere un PIN. El historial es público y puedes verlo sin él.
+        <h1 className="text-3xl font-extrabold leading-tight tracking-tight">Acceso del propietario</h1>
+        <p className="text-base text-ink/80">
+          Registrar rounds requiere un PIN. El historial es público, míralo cuando quieras.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pin" className="text-sm text-text-secondary">PIN</label>
+      <form onSubmit={handleSubmit} className="card flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="pin" className="field-label">PIN</label>
           <input
             id="pin"
             type="password"
@@ -54,29 +59,23 @@ export function PinGate() {
             autoComplete="off"
             value={pin}
             onChange={e => setPin(e.target.value)}
-            className="w-full border border-text-secondary/25 rounded-lg px-3 py-3 text-base bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
+            className="field"
           />
         </div>
 
         {error && (
-          <p role="alert" className="text-sm text-error-strong bg-error/15 border border-error/30 rounded-xl px-3 py-2">
+          <p role="alert" className="notice-error">
+            <span aria-hidden="true" className="mt-1 size-3 shrink-0 rounded-full bg-red" />
             {error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting || !pin}
-          className="bg-primary-strong text-white px-6 py-3 rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-40 active:scale-[0.98] transition"
-        >
-          {isSubmitting ? 'Verificando…' : 'Entrar'}
+        <button type="submit" disabled={isSubmitting || !pin} className="btn-primary">
+          {isSubmitting ? 'Verificando...' : 'Entrar'}
         </button>
       </form>
 
-      <div className="flex gap-4 text-sm">
-        <Link href="/history" className="text-primary-strong underline">Ver historial</Link>
-        <Link href="/" className="text-text-secondary hover:text-primary-strong transition">← Inicio</Link>
-      </div>
+      <Link href="/history" className="btn-ghost self-start">Ver el historial</Link>
     </main>
   );
 }
