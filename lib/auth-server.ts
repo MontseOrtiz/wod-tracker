@@ -12,9 +12,12 @@ export function getAuthConfig(): { pin: string; secret: string } {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
+  // Read the cookies first, unconditionally: it is what makes every page behind this
+  // check dynamic. Returning early without it would let a build that lacks AUTH_SECRET
+  // prerender the PIN form as a static page.
+  const store = await cookies();
   const secret = process.env.AUTH_SECRET;
   if (!secret) return false;
-  const store = await cookies();
   return verifySessionToken(store.get(SESSION_COOKIE)?.value, secret);
 }
 
