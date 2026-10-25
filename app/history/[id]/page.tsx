@@ -32,14 +32,14 @@ function formatWeight(weight: number | null, unit: string | null): string {
 function formatExerciseLine(ex: Tables<'exercises'>): string {
   const parts: string[] = [];
   if (ex.rep_scheme) {
-    parts.push(formatRepScheme(ex.rep_scheme), `${totalReps(ex.rep_scheme)} reps`);
+    parts.push(`${formatRepScheme(ex.rep_scheme)} (${totalReps(ex.rep_scheme)} reps)`);
   } else {
     if (ex.sets) parts.push(`${ex.sets} series`);
     if (ex.reps) parts.push(`${ex.reps} reps`);
   }
   const weightStr = formatWeight(ex.weight, ex.unit);
-  if (weightStr) parts.push(`@ ${weightStr}`);
-  return parts.join(' · ');
+  if (weightStr) parts.push(weightStr);
+  return parts.join(', ');
 }
 
 const BLOCK_ORDER: Block['block_type'][] = ['warmup', 'strength_skill', 'wod'];
@@ -50,10 +50,11 @@ const BLOCK_LABELS: Record<Block['block_type'], string> = {
   wod: 'WOD',
 };
 
-const BLOCK_DOT_COLOR: Record<Block['block_type'], string> = {
-  warmup: 'bg-secondary',
-  strength_skill: 'bg-primary',
-  wod: 'bg-accent',
+// Each block type has its own shape, so they read apart at a glance without leaning on color.
+const BLOCK_SHAPE: Record<Block['block_type'], string> = {
+  warmup: 'rounded-full bg-pink',
+  strength_skill: 'rounded-md bg-yellow',
+  wod: 'bg-red [clip-path:polygon(50%_0,100%_100%,0_100%)]',
 };
 
 // ---------------------------------------------------------------------------
@@ -98,84 +99,74 @@ export default async function SessionDetailPage({
     .filter(Boolean) as Block[];
 
   return (
-    <main className="max-w-lg mx-auto px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-8">
-        <h1 className="text-xl font-semibold text-text-primary">{formatDate(session.session_date)}</h1>
-        <Link href="/history" className="text-sm text-text-secondary hover:text-primary-strong transition shrink-0">
-          ← Historial
-        </Link>
+    <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6">
+      <div className="flex flex-col items-start gap-3">
+        <Link href="/history" className="btn-ghost min-h-11 px-4 py-2 text-sm">← Tus rounds</Link>
+        <h1 className="text-3xl font-extrabold leading-tight tracking-tight first-letter:uppercase">
+          {formatDate(session.session_date)}
+        </h1>
       </div>
 
       <div className="flex flex-col gap-4">
         {sortedBlocks.map(block => {
           const blockExercises = exerciseList.filter(ex => ex.block_id === block.id);
+          const isEmpty =
+            blockExercises.length === 0 &&
+            !block.notes &&
+            !(block.block_type === 'wod' && (block.wod_format || block.result));
 
           return (
-            <section
-              key={block.id}
-              className="flex flex-col gap-3 bg-surface border border-primary/10 rounded-2xl p-4 shadow-[0_1px_3px_rgba(75,68,83,0.06)]"
-            >
-              <h2 className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                <span className={`w-1.5 h-1.5 rounded-full ${BLOCK_DOT_COLOR[block.block_type]}`} />
+            <section key={block.id} className="overflow-hidden rounded-3xl border-2 border-blue bg-cream">
+              <h2 className="flex items-center gap-3 bg-blue px-5 py-3 text-lg font-bold text-cream">
+                <span aria-hidden="true" className={`size-4 shrink-0 border-2 border-ink ${BLOCK_SHAPE[block.block_type]}`} />
                 {BLOCK_LABELS[block.block_type]}
               </h2>
 
-              {/* WOD metadata */}
-              {block.block_type === 'wod' && (block.wod_format || block.result) && (
-                <div className="flex flex-col gap-1">
-                  {block.wod_format && (
-                    <p className="text-sm text-text-secondary">
-                      <span className="font-medium text-text-primary">Formato:</span> {block.wod_format}
-                    </p>
-                  )}
-                  {block.result && (
-                    <p className="text-sm text-text-secondary">
-                      <span className="font-medium text-text-primary">Resultado:</span> {block.result}
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="flex flex-col gap-3 p-5">
+                {block.block_type === 'wod' && (block.wod_format || block.result) && (
+                  <dl className="flex flex-col gap-1 text-base">
+                    {block.wod_format && (
+                      <div className="flex gap-2">
+                        <dt className="font-bold">Formato:</dt>
+                        <dd>{block.wod_format}</dd>
+                      </div>
+                    )}
+                    {block.result && (
+                      <div className="flex gap-2">
+                        <dt className="font-bold">Resultado:</dt>
+                        <dd>{block.result}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )}
 
-              {/* Warmup notes */}
-              {block.block_type === 'warmup' && block.notes && (
-                <p className="text-sm text-text-primary whitespace-pre-wrap">{block.notes}</p>
-              )}
+                {block.block_type === 'warmup' && block.notes && (
+                  <p className="whitespace-pre-wrap text-base">{block.notes}</p>
+                )}
 
-              {/* Exercises */}
-              {blockExercises.length > 0 && (
-                <ul className="flex flex-col gap-2">
-                  {blockExercises.map(ex => (
-                    <li
-                      key={ex.id}
-                      className="flex flex-col bg-surface-soft border border-text-secondary/10 rounded-xl px-3 py-2"
-                    >
-                      <span className="text-sm font-medium text-text-primary">{ex.exercise_name}</span>
-                      {formatExerciseLine(ex) && (
-                        <span className="text-xs text-text-secondary mt-0.5">
-                          {formatExerciseLine(ex)}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {blockExercises.length > 0 && (
+                  <ul className="flex flex-col gap-2">
+                    {blockExercises.map(ex => {
+                      const line = formatExerciseLine(ex);
+                      return (
+                        <li key={ex.id} className="flex flex-col gap-1 rounded-2xl border-2 border-ink bg-yellow px-4 py-3">
+                          <span className="text-base font-bold">{ex.exercise_name}</span>
+                          {line && <span className="text-sm font-medium">{line}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
 
-              {/* Empty state for a block */}
-              {block.block_type !== 'warmup' && blockExercises.length === 0 && !block.wod_format && !block.result && (
-                <p className="text-sm text-text-secondary italic">Nada registrado.</p>
-              )}
-              {block.block_type === 'warmup' && !block.notes && blockExercises.length === 0 && (
-                <p className="text-sm text-text-secondary italic">Nada registrado.</p>
-              )}
+                {isEmpty && <p className="text-base text-ink/80">Nada registrado en este bloque.</p>}
+              </div>
             </section>
           );
         })}
 
         {session.whiteboard_photo_url && (
-          <details className="bg-surface border border-primary/10 rounded-2xl p-4 shadow-[0_1px_3px_rgba(75,68,83,0.06)]">
-            <summary className="cursor-pointer text-xs font-semibold text-text-secondary uppercase tracking-wide">
-              Foto del entrenamiento
-            </summary>
+          <details className="rounded-3xl border-2 border-ink bg-cream p-5">
+            <summary className="cursor-pointer text-lg font-bold">Foto del WOD</summary>
             {/* unoptimized: users may upload HEIC, which the Next image optimizer can't process */}
             <Image
               src={session.whiteboard_photo_url}
@@ -183,7 +174,7 @@ export default async function SessionDetailPage({
               width={1200}
               height={900}
               unoptimized
-              className="mt-3 w-full h-auto rounded-xl"
+              className="mt-4 h-auto w-full rounded-2xl border-2 border-ink"
             />
           </details>
         )}

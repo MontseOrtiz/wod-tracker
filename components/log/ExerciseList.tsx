@@ -22,104 +22,136 @@ export function ExerciseList({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {exercises.map((ex, index) => (
-        <div
-          key={ex.id}
-          className="flex flex-col gap-2 p-3 bg-surface border border-primary/10 rounded-2xl shadow-[0_1px_3px_rgba(75,68,83,0.05)]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide">
-              Ejercicio {index + 1}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => updateField(ex.id, 'isLadder', !ex.isLadder)}
-                aria-pressed={ex.isLadder}
-                className={`text-xs font-medium rounded-lg px-3 py-2 border transition ${
-                  ex.isLadder
-                    ? 'bg-primary/15 border-primary/40 text-primary-strong'
-                    : 'border-text-secondary/25 text-text-secondary hover:text-primary-strong'
-                }`}
-              >
-                Escalera
-              </button>
-              {exercises.length > 1 && (
+    <div className="flex flex-col gap-4">
+      {exercises.map((ex, index) => {
+        const scheme = ex.isLadder ? parseRepScheme(ex.repScheme) : null;
+
+        return (
+          <div key={ex.id} className="card flex flex-col gap-4 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-base font-bold">Ejercicio {index + 1}</span>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => removeRow(ex.id)}
-                  className="text-xs text-error-strong hover:opacity-70 transition px-3 py-2"
+                  onClick={() => updateField(ex.id, 'isLadder', !ex.isLadder)}
+                  aria-pressed={ex.isLadder}
+                  className={`min-h-11 rounded-full border-2 px-4 text-sm font-semibold transition duration-150 active:scale-95 ${
+                    ex.isLadder
+                      ? 'border-blue bg-blue text-cream'
+                      : 'border-blue bg-cream text-blue hover:bg-blue hover:text-cream'
+                  }`}
                 >
-                  Eliminar
+                  Escalera
                 </button>
-              )}
+                {exercises.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeRow(ex.id)}
+                    className="min-h-11 rounded-full border-2 border-red bg-cream px-4 text-sm font-semibold text-ink transition duration-150 hover:bg-yellow active:scale-95"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          <input
-            type="text"
-            placeholder="Nombre del ejercicio (ej. Sentadilla trasera)"
-            value={ex.exercise_name}
-            onChange={e => updateField(ex.id, 'exercise_name', e.target.value)}
-            className="w-full border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
-          />
-          <div className="grid grid-cols-3 gap-2">
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${ex.id}-name`} className="field-label">Nombre del ejercicio</label>
+              <input
+                id={`${ex.id}-name`}
+                type="text"
+                placeholder="ej. Sentadilla trasera"
+                value={ex.exercise_name}
+                onChange={e => updateField(ex.id, 'exercise_name', e.target.value)}
+                className="field"
+              />
+            </div>
+
             {ex.isLadder ? (
-              <div className="col-span-2 flex flex-col gap-1">
-                <label htmlFor={`scheme-${ex.id}`} className="text-xs text-text-secondary">
-                  Repeticiones por ronda
-                </label>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor={`${ex.id}-scheme`} className="field-label">Repeticiones por ronda</label>
                 <input
-                  id={`scheme-${ex.id}`}
+                  id={`${ex.id}-scheme`}
                   type="text"
                   inputMode="numeric"
                   placeholder="10-15-20-15-10"
                   value={ex.repScheme}
                   onChange={e => updateField(ex.id, 'repScheme', e.target.value)}
-                  className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
+                  className="field"
                 />
+                {ex.repScheme.trim() !== '' && (
+                  <div aria-live="polite" className="flex flex-col gap-2 pt-1">
+                    {scheme ? (
+                      <>
+                        <ul className="flex flex-wrap gap-1.5">
+                          {scheme.map((reps, i) => (
+                            <li
+                              key={i}
+                              className="rounded-full border-2 border-ink bg-yellow px-3 py-0.5 text-sm font-bold"
+                            >
+                              {reps}
+                            </li>
+                          ))}
+                        </ul>
+                        <p className="text-sm font-medium text-ink/80">
+                          {scheme.length} rondas, {totalReps(scheme)} reps ({formatRepScheme(scheme)})
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium">Escribe al menos 2 rondas separadas por guiones, ej. 21-15-9</p>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
-              <>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">Series</label>
-              <input
-                type="number"
-                placeholder="—"
-                value={ex.sets}
-                onChange={e => updateField(ex.id, 'sets', e.target.value)}
-                min={0}
-                className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">Reps</label>
-              <input
-                type="number"
-                placeholder="—"
-                value={ex.reps}
-                onChange={e => updateField(ex.id, 'reps', e.target.value)}
-                min={0}
-                className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
-              />
-            </div>
-              </>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={`${ex.id}-sets`} className="field-label">Series</label>
+                  <input
+                    id={`${ex.id}-sets`}
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={ex.sets}
+                    onChange={e => updateField(ex.id, 'sets', e.target.value)}
+                    min={0}
+                    className="field"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor={`${ex.id}-reps`} className="field-label">Reps</label>
+                  <input
+                    id={`${ex.id}-reps`}
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={ex.reps}
+                    onChange={e => updateField(ex.id, 'reps', e.target.value)}
+                    min={0}
+                    className="field"
+                  />
+                </div>
+              </div>
             )}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-secondary">Peso</label>
-              <div className="flex gap-1">
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${ex.id}-weight`} className="field-label">Peso</label>
+              <div className="flex gap-2">
                 <input
+                  id={`${ex.id}-weight`}
                   type="number"
-                  placeholder="—"
+                  inputMode="decimal"
+                  placeholder="0"
                   value={ex.weight}
                   onChange={e => updateField(ex.id, 'weight', e.target.value)}
                   min={0}
-                  className="min-w-0 flex-1 border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
+                  className="field min-w-0 flex-1"
                 />
                 <select
+                  aria-label="Unidad del peso"
                   value={ex.unit}
                   onChange={e => updateField(ex.id, 'unit', e.target.value as ExerciseRow['unit'])}
-                  className="border border-text-secondary/25 rounded-lg px-2 py-2 text-sm bg-surface-soft text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
+                  className="field w-24 shrink-0"
                 >
                   <option value="lb">lb</option>
                   <option value="kg">kg</option>
@@ -128,24 +160,11 @@ export function ExerciseList({
               </div>
             </div>
           </div>
-          {ex.isLadder && ex.repScheme.trim() !== '' && (
-            <p className="text-xs text-text-secondary" aria-live="polite">
-              {(() => {
-                const scheme = parseRepScheme(ex.repScheme);
-                return scheme
-                  ? `${formatRepScheme(scheme, ' · ')} — ${scheme.length} rondas, ${totalReps(scheme)} reps`
-                  : 'Escribe al menos 2 rondas separadas por guiones, ej. 21-15-9';
-              })()}
-            </p>
-          )}
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={addRow}
-        className="self-start text-sm text-primary-strong hover:opacity-70 font-medium transition"
-      >
-        + Agregar ejercicio
+        );
+      })}
+
+      <button type="button" onClick={addRow} className="btn-ghost self-start">
+        + Otro ejercicio
       </button>
     </div>
   );

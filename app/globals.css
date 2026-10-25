@@ -1,45 +1,153 @@
 @import "tailwindcss";
 
+/*
+  Retro 70s geometric palette. Strict: nothing outside these six colors.
+  Contrast (WCAG), measured:
+    ink on cream 10.4 · ink on yellow 7.4 · cream on blue 5.4 · blue on cream 5.4
+    ink on pink 4.5 (bold or large only) · cream on red 3.8 (large or UI only)
+  So: pink and red are never text colors on cream, yellow never relies on itself
+  as a boundary (always a 2px ink border), and focus rings are blue.
+*/
 :root {
-  --primary: #B9A3EA;
-  --primary-strong: #8158D8; /* deeper shade of --primary, used for solid fills + text so white/on-light text clears WCAG AA */
-  --secondary: #A8D9C9;
-  --accent: #F7B6C8;
-  --background: #FAF6F0;
-  --surface: #FFFFFF;
-  --surface-soft: #FFF8FB;
-  --text-primary: #4B4453;
-  --text-secondary: #7D7387;
-  --success: #9ED8B7;
-  --success-strong: #2F744D; /* deeper shade of --success, used as legible text/icon color */
-  --warning: #F8D49D;
-  --error: #F5A3A3;
-  --error-strong: #B81414; /* deeper shade of --error, used as legible text/icon color */
-  --info: #A9C7F8;
+  --cream: #FAF0D7;
+  --yellow: #FFC31B;
+  --blue: #006994;
+  --pink: #FF69B4;
+  --red: #E5340B;
+  --ink: #3F362A;
 }
 
 @theme inline {
-  --color-primary: var(--primary);
-  --color-primary-strong: var(--primary-strong);
-  --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-background: var(--background);
-  --color-surface: var(--surface);
-  --color-surface-soft: var(--surface-soft);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-success: var(--success);
-  --color-success-strong: var(--success-strong);
-  --color-warning: var(--warning);
-  --color-error: var(--error);
-  --color-error-strong: var(--error-strong);
-  --color-info: var(--info);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--cream);
+  --color-yellow: var(--yellow);
+  --color-blue: var(--blue);
+  --color-pink: var(--pink);
+  --color-red: var(--red);
+  --color-ink: var(--ink);
+  --font-sans: var(--font-poppins), "Futura", "Trebuchet MS", sans-serif;
+}
+
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--text-primary);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* Subtle vintage grain. Fixed and pointer-events none so it never repaints with scroll. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+/* Declared with @utility (not plain classes) so they can be composed with @apply. */
+
+/* Pills with a hard 2px ink edge: the edge is what separates yellow from cream. */
+@utility btn {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-ink px-6 py-3
+    text-center text-base font-semibold leading-tight transition duration-150
+    active:translate-y-0.5 active:scale-[0.97]
+    disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 disabled:active:scale-100;
+}
+@utility btn-primary {
+  @apply btn bg-yellow text-ink hover:bg-ink hover:text-yellow;
+}
+@utility btn-blue {
+  @apply btn border-blue bg-blue text-cream hover:border-ink hover:bg-ink;
+}
+@utility btn-ghost {
+  @apply btn border-blue bg-cream text-blue hover:bg-blue hover:text-cream;
+}
+
+@utility card {
+  @apply rounded-3xl border-2 border-ink bg-cream p-5;
+}
+
+@utility field {
+  @apply min-h-12 w-full rounded-2xl border-2 border-ink bg-cream px-4 py-3 text-base text-ink
+    placeholder:text-ink/75;
+}
+@utility field-label {
+  @apply text-sm font-semibold text-ink;
+}
+
+/* Error/alert: ink text on cream, the red lives in the border and the marker. */
+@utility notice-error {
+  @apply flex items-start gap-3 rounded-2xl border-2 border-red bg-cream p-4 text-sm font-medium text-ink;
+}
+
+/* "Ticket": yellow card with a blue edge and two punched notches. */
+@utility ticket {
+  @apply relative rounded-3xl border-4 border-blue bg-yellow p-6 text-ink;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    margin-top: -14px;
+    border-radius: 9999px;
+    background: var(--cream);
+    border: 4px solid var(--blue);
+  }
+  &::before { left: -18px; }
+  &::after { right: -18px; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion: always motivated (feedback, hierarchy), always optional      */
+/* ------------------------------------------------------------------ */
+@keyframes dance {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  35% { transform: rotate(14deg) scale(1.08); }
+  70% { transform: rotate(-10deg) scale(0.94); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-6deg); }
+  75% { transform: rotate(6deg); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.12) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes pulse-bar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pattern-dance {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: dance 5s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  .hover-wiggle:hover { animation: wiggle 0.5s ease-in-out; }
+  .animate-pop { animation: pop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-pulse-bar { animation: pulse-bar 1.4s ease-in-out infinite; }
 }

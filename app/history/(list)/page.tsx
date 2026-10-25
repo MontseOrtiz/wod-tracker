@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Form from 'next/form';
 import { supabase } from '@/lib/supabase';
+import { GeometricPattern } from '@/components/ui/GeometricPattern';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,14 +17,14 @@ const MONTH_NAMES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-function formatDate(dateStr: string): string {
+function dateParts(dateStr: string) {
   const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('es-ES', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const date = new Date(year, month - 1, day);
+  return {
+    day,
+    month: date.toLocaleDateString('es-ES', { month: 'short' }).replace('.', ''),
+    weekday: date.toLocaleDateString('es-ES', { weekday: 'long' }),
+  };
 }
 
 function formatTime(createdAt: string | null): string | null {
@@ -98,115 +99,100 @@ export default async function HistoryPage({
   ).range(from, to);
 
   return (
-    <main className="max-w-lg mx-auto px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-8">
-        <h1 className="text-xl font-semibold text-text-primary">Historial de entrenamientos</h1>
-        <Link href="/" className="text-sm text-text-secondary hover:text-primary-strong transition shrink-0">
-          ← Inicio
-        </Link>
+    <main className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-extrabold tracking-tight">Tus rounds</h1>
+        <p className="text-base text-ink/80">Del más reciente al más viejo.</p>
       </div>
 
-      <Form action="/history" className="flex flex-wrap items-end gap-3 mb-6">
+      <Form action="/history" className="card flex flex-wrap items-end gap-3">
         <input type="hidden" name="page" value="1" />
-        <div className="flex flex-col gap-1">
-          <label htmlFor="month" className="text-xs text-text-secondary">Mes</label>
-          <select
-            id="month"
-            name="month"
-            defaultValue={month ?? ''}
-            className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
-          >
+        <div className="flex min-w-32 flex-1 flex-col gap-1.5">
+          <label htmlFor="month" className="field-label">Mes</label>
+          <select id="month" name="month" defaultValue={month ?? ''} className="field">
             <option value="">Todos</option>
             {availableMonths.map(m => (
               <option key={m} value={m}>{monthLabel(m)}</option>
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="year" className="text-xs text-text-secondary">Año</label>
-          <select
-            id="year"
-            name="year"
-            defaultValue={year ?? ''}
-            className="border border-text-secondary/25 rounded-lg px-3 py-2 text-sm bg-surface text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary"
-          >
+        <div className="flex min-w-28 flex-1 flex-col gap-1.5">
+          <label htmlFor="year" className="field-label">Año</label>
+          <select id="year" name="year" defaultValue={year ?? ''} className="field">
             <option value="">Todos</option>
             {availableYears.map(y => (
               <option key={y} value={y}>{y}</option>
             ))}
           </select>
         </div>
-        <button
-          type="submit"
-          className="bg-primary-strong text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90 active:scale-[0.98] transition"
-        >
-          Filtrar
-        </button>
+        <button type="submit" className="btn-blue">Filtrar</button>
         {(year || month) && (
-          <Link href="/history" className="text-sm text-text-secondary hover:text-primary-strong underline transition">
-            Quitar filtro
-          </Link>
+          <Link href="/history" className="btn-ghost">Quitar filtro</Link>
         )}
       </Form>
 
       {error && (
-        <p className="text-sm text-error-strong bg-error/15 border border-error/30 rounded-xl px-3 py-2 mb-6">
+        <p role="alert" className="notice-error">
+          <span aria-hidden="true" className="mt-1 size-3 shrink-0 rounded-full bg-red" />
           {error.message}
         </p>
       )}
 
       {!error && sessions?.length === 0 && (
-        <p className="text-sm text-text-secondary bg-surface-soft border border-text-secondary/10 rounded-2xl px-4 py-6 text-center">
-          {isFiltered ? 'No hay entrenamientos registrados para ese mes.' : 'Aún no hay entrenamientos registrados.'}
-        </p>
+        <div className="card flex flex-col items-center gap-4 text-center">
+          <div className="h-20 w-full overflow-hidden rounded-2xl border-2 border-blue">
+            <GeometricPattern cols={10} rows={2} cell={32} seed={5} className="h-full w-full" />
+          </div>
+          <p className="text-lg font-bold">
+            {isFiltered ? 'Ningún round ese mes. ¿Lo recuperamos?' : 'Aún no hay rounds. ¿Te animas al primero?'}
+          </p>
+          <Link href="/log" className="btn-primary">Empezar mi round</Link>
+        </div>
       )}
 
       {sessions && sessions.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {sessions.map(session => (
-            <Link
-              key={session.id}
-              href={`/history/${session.id}`}
-              className="flex items-center justify-between p-4 bg-surface border border-primary/10 rounded-2xl shadow-[0_1px_3px_rgba(75,68,83,0.06)] hover:shadow-[0_2px_8px_rgba(75,68,83,0.10)] hover:border-primary/30 hover:-translate-y-0.5 transition"
-            >
-              <span className="text-sm font-medium text-text-primary">
-                {formatDate(session.session_date)}
-                {formatTime(session.created_at) && (
-                  <span className="text-text-secondary font-normal"> — {formatTime(session.created_at)}</span>
-                )}
-              </span>
-              <span className="text-primary-strong text-sm">→</span>
-            </Link>
-          ))}
-        </div>
+        <ul className="flex flex-col gap-3">
+          {sessions.map(session => {
+            const { day, month: shortMonth, weekday } = dateParts(session.session_date);
+            const time = formatTime(session.created_at);
+            return (
+              <li key={session.id}>
+                <Link
+                  href={`/history/${session.id}`}
+                  className="flex items-center gap-4 rounded-3xl border-2 border-blue bg-cream p-3 pr-5 transition duration-150 hover:bg-yellow active:scale-[0.98]"
+                >
+                  <span className="flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-blue text-cream">
+                    <span className="text-2xl font-extrabold leading-none">{day}</span>
+                    <span className="text-xs font-semibold uppercase">{shortMonth}</span>
+                  </span>
+                  <span className="flex flex-1 flex-col">
+                    <span className="text-base font-bold capitalize">{weekday}</span>
+                    {time && <span className="text-sm text-ink/80">{time} h</span>}
+                  </span>
+                  <span aria-hidden="true" className="text-xl font-bold text-blue">→</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
       {sessions && sessions.length > 0 && totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
+        <nav aria-label="Paginación" className="flex items-center justify-between gap-3">
           {page > 1 ? (
-            <Link
-              href={buildHref(page - 1, year, month)}
-              className="text-sm border border-text-secondary/30 text-text-secondary px-4 py-2 rounded-xl font-medium hover:border-primary/40 hover:text-primary-strong transition"
-            >
-              ← Anterior
-            </Link>
+            <Link href={buildHref(page - 1, year, month)} className="btn-ghost">← Anterior</Link>
           ) : (
             <span />
           )}
-          <span className="text-xs text-text-secondary">
-            Página {page} de {totalPages}
+          <span className="text-sm font-semibold text-ink/80">
+            {page} de {totalPages}
           </span>
           {page < totalPages ? (
-            <Link
-              href={buildHref(page + 1, year, month)}
-              className="text-sm border border-text-secondary/30 text-text-secondary px-4 py-2 rounded-xl font-medium hover:border-primary/40 hover:text-primary-strong transition"
-            >
-              Siguiente →
-            </Link>
+            <Link href={buildHref(page + 1, year, month)} className="btn-ghost">Siguiente →</Link>
           ) : (
             <span />
           )}
-        </div>
+        </nav>
       )}
     </main>
   );

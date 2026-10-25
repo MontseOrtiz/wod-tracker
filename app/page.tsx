@@ -1,27 +1,35 @@
 import Link from 'next/link';
+import { GeometricPattern, PatternDivider } from '@/components/ui/GeometricPattern';
+import { Logo } from '@/components/ui/Logo';
 
 export default function HomePage() {
   return (
-    <main className="max-w-lg mx-auto px-4 py-16 flex flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary">WOD Tracker</h1>
-        <p className="text-text-secondary text-sm">Registra tus entrenamientos de CrossFit y sigue tu progreso.</p>
-      </div>
+    <main className="mx-auto flex w-full max-w-lg flex-col gap-8 px-4 py-6">
+      {/* The pattern is the backdrop; the greeting sits on its own cream panel. */}
+      <section className="relative overflow-hidden rounded-3xl border-2 border-ink">
+        <GeometricPattern animated cols={12} rows={7} className="absolute inset-0 h-full w-full" />
+        <div className="relative flex justify-center px-5 py-12">
+          <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-ink bg-cream px-6 py-6 text-center">
+            <Logo size={56} />
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight">
+              ¡Hola! ¿Cómo va tu groove hoy?
+            </h1>
+          </div>
+        </div>
+      </section>
 
-      <div className="flex flex-col gap-3">
-        <Link
-          href="/log"
-          className="flex items-center justify-center bg-primary-strong text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 active:scale-[0.98] transition"
-        >
-          Iniciar entrenamiento de hoy
+      <section className="ticket flex flex-col gap-5">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-extrabold leading-tight">¿Listo para tu round?</h2>
+          <p className="text-base">Una foto del WOD, un par de toques y queda guardado.</p>
+        </div>
+        <div className="border-t-2 border-dashed border-blue" />
+        <Link href="/log" className="btn-blue hover-wiggle">
+          Empezar mi round
         </Link>
-        <Link
-          href="/history"
-          className="flex items-center justify-center border border-text-secondary/30 bg-surface text-text-secondary px-6 py-3 rounded-xl font-medium hover:bg-surface-soft hover:border-primary/40 hover:text-primary-strong active:scale-[0.98] transition"
-        >
-          Ver historial
-        </Link>
-      </div>
+      </section>
+
+      <PatternDivider />
     </main>
   );
 }
