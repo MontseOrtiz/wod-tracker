@@ -6,8 +6,11 @@ import { DEMO_PIN } from '../playwright.config';
 // the run fails instead of photographing a broken app.
 // JPEG at 90: the grain texture makes PNGs ~3x heavier with no visible gain at this size.
 // `animations: 'disabled'` lets CSS transitions finish, so no button is caught half-way.
-const shot = (page: Page, name: string) =>
-  page.screenshot({ path: `docs/screenshots/${name}.jpg`, type: 'jpeg', quality: 90, animations: 'disabled' });
+const shot = async (page: Page, name: string) => {
+  // Park the cursor off-screen so it can't leave a :hover state on whatever it last touched.
+  await page.mouse.move(0, 0);
+  await page.screenshot({ path: `docs/screenshots/${name}.jpg`, type: 'jpeg', quality: 90, animations: 'disabled' });
+};
 
 // The wizard screens are taller than a phone: give them room so the floating nav
 // doesn't cover the Back/Next buttons in the photo.
