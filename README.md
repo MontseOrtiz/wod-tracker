@@ -6,6 +6,28 @@ Así que construí esto: le tomo una foto a la pantalla, una IA con visión (Gem
 
 **[Ver demo en vivo →](https://wod-tracker-iota.vercel.app/)**
 
+## Capturas
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/01-inicio.jpg" width="240" alt="Inicio con el patrón geométrico y el ticket para empezar"><br><sub>Inicio</sub></td>
+    <td align="center"><img src="docs/screenshots/02-historial.jpg" width="240" alt="Historial de rounds con filtros por mes y año"><br><sub>Historial (público)</sub></td>
+    <td align="center"><img src="docs/screenshots/03-detalle.jpg" width="240" alt="Detalle de una sesión con una escalera 21-15-9"><br><sub>Detalle con escalera</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/04-acceso.jpg" width="240" alt="Formulario de PIN del propietario"><br><sub>Acceso con PIN</sub></td>
+    <td align="center"><img src="docs/screenshots/05-foto.jpg" width="240" alt="Primer paso: subir la foto del WOD"><br><sub>Foto del WOD</sub></td>
+    <td align="center"><img src="docs/screenshots/06-escalera.jpg" width="240" alt="Ejercicio en modo escalera con vista previa de rondas"><br><sub>Modo escalera</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/07-wod.jpg" width="240" alt="Paso final del asistente con el botón para guardar"><br><sub>Último paso</sub></td>
+    <td align="center"><img src="docs/screenshots/08-guardado.jpg" width="240" alt="Pantalla de round guardado con una medalla geométrica"><br><sub>Round guardado</sub></td>
+    <td align="center"><img src="docs/screenshots/09-404.jpg" width="240" alt="Página 404 con el patrón geométrico"><br><sub>404</sub></td>
+  </tr>
+</table>
+
+Se generan con `npm run screenshots` (Playwright) contra un Supabase simulado, con datos de ejemplo fijos: no sale nada real y cualquiera puede reproducirlas sin cuenta de Supabase.
+
 ## Cómo funciona
 
 1. Entro con mi PIN (el historial es público; escribir no) y subo una foto del WOD, o la omito y lo lleno a mano.
@@ -51,6 +73,7 @@ lib/
   auth.ts              tokens de sesión y comparación del PIN (puro, con tests)
   log-form.ts          lógica pura del formulario
   rep-scheme.ts        parseo de escaleras
+e2e/                   Playwright: servidor Supabase simulado y recorrido que genera las capturas
 supabase/migrations/   el esquema, versionado
 types/supabase.ts      generado (npm run db:types)
 ```
@@ -93,6 +116,7 @@ npm run dev
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run db:types` | Regenera `types/supabase.ts` desde la base vinculada |
+| `npm run screenshots` | Recorre la app con Playwright y regenera `docs/screenshots/`. Usa tu Chrome y un Supabase simulado (`e2e/mock-supabase.mjs`); el recorrido hace de prueba de humo de extremo a extremo |
 
 **Base de datos** (con el [CLI de Supabase](https://supabase.com/docs/guides/cli)): `supabase link --project-ref <ref>` y `supabase db push` aplican las migraciones de `supabase/migrations/`. Las migraciones son aditivas salvo la última (`close_anon_writes`), que solo debe aplicarse cuando la versión que guarda por servidor ya está desplegada.
 
@@ -100,7 +124,7 @@ npm run dev
 
 - Una foto de más de 4 MB se rechaza; falta comprimir en el cliente antes de subirla.
 - La hora de cada sesión en el historial se formatea en el servidor (UTC en Vercel).
-- Fuera del flujo de guardado no hay tests de interfaz ni de extremo a extremo.
+- El recorrido de Playwright cubre el flujo principal (acceso, wizard, guardado) contra un backend simulado, pero no corre en CI todavía y no cubre la lectura de la foto con Gemini.
 
 ## Lo que sigue
 
